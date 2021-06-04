@@ -1,0 +1,18 @@
+[
+  {
+    "id": 0,
+    "sender": "alex@outlook.com",
+    "reciever": "bob@gmail.com",
+    "theme": "Hello, Mr. Bob!",
+    "body": "Just wanted to say hi. Hi! Now farewell - Mr. Alex",
+    "reply_to": -1
+  },
+  {
+    "id": 1,
+    "sender": "bob@gmail.com",
+    "reciever": "alex@outlook.com",
+    "theme": "Hello, Mr. Alex ;}",
+    "body": "Hello to you too. - Mr. Bob",
+    "reply_to": 0
+  },
+]
