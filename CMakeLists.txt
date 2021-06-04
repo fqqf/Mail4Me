@@ -3,4 +3,4 @@ project(mail4me C)
 
 set(CMAKE_C_STANDARD 99)
 
-add_executable(mail4me main.c jsmn_parser.h)
+add_executable(mail4me main.c lib/jsmn_parser.h)
