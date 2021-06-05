@@ -16,27 +16,19 @@
     "reply_to": 0
   },
   {
-    "id": 5,
-    "sender": "bob@gmail.com",
-    "receiver": "alex@outlook.com",
-    "theme": "Hello, Mr. Alex ;}",
-    "body": "Hello to you too. - Mr. Bob",
-    "reply_to": 0
+    "id": 2,
+    "sender": "steven@hotmail.com",
+    "receiver": "spinel@yandex.ru",
+    "theme": "NO_THEME",
+    "body": "So, how you've been since...?",
+    "reply_to": -1
   },
   {
     "id": 3,
-    "sender": "bob@gmail.com",
-    "receiver": "alex@outlook.com",
-    "theme": "Hello, Mr. Alex ;}",
-    "body": "Hello to you too. - Mr. Bob",
-    "reply_to": 0
-  },
-  {
-    "id": 2,
-    "sender": "bob@gmail.com",
-    "receiver": "alex@outlook.com",
-    "theme": "Hello, Mr. Alex ;}",
-    "body": "Hello to you too. - Mr. Bob",
-    "reply_to": 0
+    "sender": "spinel@yandex.ru",
+    "receiver": "steven@hotmail.com",
+    "theme": "NO_THEME",
+    "body": "Since I tried to kill you? That was so embarrassing! I was just a wreck back then, but I am so much better now!",
+    "reply_to": 2
   }
 ]
