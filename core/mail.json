@@ -30,5 +30,61 @@
     "theme": "NO_THEME",
     "body": "Since I tried to kill you? That was so embarrassing! I was just a wreck back then, but I am so much better now!",
     "reply_to": 2
+  },
+  {
+    "id": 4,
+    "sender": "Don@yandex.ru",
+    "receiver": "Anna@gmail",
+    "theme": "Hi, Anna.",
+    "body": "How's the weather? I would like to come to you.",
+    "reply_to": -1
+  },
+  {
+    "id": 5,
+    "sender": "Anna@gmail",
+    "receiver": "Don@yandex.ru",
+    "theme": "Hi, Anna.",
+    "body": "The weather is good. We are waiting for you to visit.",
+    "reply_to": 4
+  },
+  {
+    "id": 6,
+    "sender": "Emma@yandex.ru",
+    "receiver": "Alisa@yandex.ru",
+    "theme": "Hi? Alisa.",
+    "body": "What's your brother doing? He's not answering his phone.",
+    "reply_to": -1
+  },
+  {
+    "id": 7,
+    "sender": "Alisa@yandex.ru",
+    "receiver": "Emma@yandex.ru",
+    "theme": "Hi, Mom.",
+    "body": "He's playing with a friend in the backyard now.",
+    "reply_to": 6
+  },
+  {
+    "id": 8,
+    "sender": "Harry@gmail.com",
+    "receiver": "Olivia@hotmail.com",
+    "theme": "Hi, Olivia.",
+    "body": "Will you come with us tomorrow morning to paint nature?",
+    "reply_to": -1
+  },
+  {
+    "id": 9,
+    "sender": "Olivia@hotmail.com",
+    "receiver": "Harry@gmail.com",
+    "theme": "Hello, Harry.",
+    "body": "No, I'm sorry. I'll be busy at the farm for the next week.",
+    "reply_to": 8
+  },
+  {
+    "id": 10,
+    "sender": "Harry@gmail.com",
+    "receiver": "Olivia@hotmail.com",
+    "theme": "NO_THEME",
+    "body": "It's okay. You can join us next month.",
+    "reply_to": 9
   }
 ]

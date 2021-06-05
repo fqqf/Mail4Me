@@ -4,9 +4,9 @@
 #include "lib/jsmn_parser.h"
 
 #define KEYS 6
-#define TOKENS 128
+#define TOKENS 256
 
-#define MAX_JSON_LENGTH 1024
+#define MAX_JSON_LENGTH 4095
 #define MAX_KEY_LENGTH 512
 #define MAX_LETTER_LENGTH 1024
 
@@ -25,14 +25,16 @@
 #define REPLY_TO 5
 
 int parse_json(char *json_, jsmn_parser parser_, jsmntok_t *tokens_, char *path_);
-int load_json();
 int read_file(char *string, char path[100]);
+int load_resources();
+
+void delete_letter(int adr);
 
 int find_adr_by_id(int id);
 int find_adr_by_theme(int *dest_adrs, char *theme);
 void get_json_value(char *dest, int address);
 
-char json[MAX_JSON_LENGTH];
+char json[MAX_JSON_LENGTH]={0};
 int json_size;
 int letters_amount;
 
@@ -43,9 +45,10 @@ char temp_holder[1024];
 
 int main()
 {
-
+ printf("%s",json);
+ //exit(1);
  int adrs[1024];
- find_adr_by_theme(adrs, "NO_THEME");
+ find_adr_by_theme(adrs, "Hi");
 
  char letter[MAX_LETTER_LENGTH];
 
@@ -58,9 +61,14 @@ int main()
  return 1;
 }
 
+void delete_letter(int adr)
+{
+
+}
+
 int find_adr_by_id(int id)
 {
- load_json();
+ load_resources();
 
  for (int i = 0, iter_id = 0; i < json_size; i++)
  {
@@ -78,9 +86,14 @@ int find_adr_by_id(int id)
  return -1;
 }
 
+void delete_letter(int addr)
+{
+
+}
+
 int find_adr_by_theme(int *dest_adrs, char *theme)
 {
- load_json();
+ load_resources();
 
  char *iter_theme;
 
@@ -108,7 +121,7 @@ int parse_json(char *json_, jsmn_parser parser_, jsmntok_t *tokens_, char *path_
  read_file(json_, path_);
  jsmn_init(&parser_);
 
- int json_size_ = jsmn_parse(&parser_, json_, strlen(json), tokens_, 128);
+ int json_size_ = jsmn_parse(&parser_, json_, strlen(json), tokens_, TOKENS);
 
  if (json_size_ < 0)
  {
@@ -143,7 +156,7 @@ void get_json_value(char *dest, int address)
  dest[length] = '\0';
 }
 
-int load_json()
+int load_resources()
 {
  json_size = parse_json(json, parser, tokens, MAIL_LOCATION);
  letters_amount = LETTERS_AMOUNT(json_size);
