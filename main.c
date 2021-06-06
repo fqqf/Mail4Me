@@ -1,15 +1,20 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <io.h>
 #include "lib/jsmn_parser.h"
 
 #define KEYS 6
-#define TOKENS 512
 
-#define MAX_JSON_LENGTH 4096
+#define KILOBYTE 1024
+
+#define LETTER_LENGTH 300
+#define MAX_LETTERS_AMOUNT 100
+
+#define TOKENS (MAX_LETTERS_AMOUNT*KEYS*2)+MAX_LETTERS_AMOUNT+1
+
+#define MAX_MAIL_LENGTH MAX_LETTERS_AMOUNT*LETTER_LENGTH+KILOBYTE
 #define MAX_BITMAP_LENGTH 512
-#define MAX_KEY_LENGTH 512
-#define MAX_LETTER_LENGTH 1024
 
 #define MAIL_LOCATION "..\\core\\mail.json"
 #define BITMAP_LOCATION "..\\core\\bitmap.map"
@@ -17,7 +22,7 @@
 #define LETTER_KEY_ADR(MAIL_NUM, KEY_NUM) MAIL_NUM*(KEYS*2)+(MAIL_NUM+1)+(2*(KEY_NUM+1))
 #define LETTER_ADR(MAIL_NUM) MAIL_NUM*(KEYS*2)+(MAIL_NUM+1)
 #define LETTER_KEY_ADR2(LETTER_ADR, KEY_NUM) LETTER_ADR+(2*(KEY_NUM+1))
-#define LETTERS_AMOUNT(JSON_SIZE) (JSON_SIZE-1)/(KEYS*2+1)
+#define LETTERS_AMOUNT(MAIL_SIZE) (MAIL_SIZE-1)/(KEYS*2+1)
 
 #define ID 0
 #define SENDER 1
@@ -26,83 +31,104 @@
 #define BODY 4
 #define REPLY_TO 5
 
+#define SUCCESS 0
+#define ERROR -1
+
 int parse_json(char *json_, jsmn_parser parser_, jsmntok_t *tokens_, char *path_);
+
+int load_bitmap(char* bitmap_);
+int load_mail(char* mail_);
+
 int read_file(char *string, char path[100]);
-int load_resources();
 
-void delete_letter(int adr);
-
+int change_bitmap(int letter_address,char value);
 int find_adr_by_id(int id);
 int find_adr_by_theme(int *dest_adrs, char *theme);
-void get_json_value(char *dest, int address);
+int get_json_value(char* json_, char *dest, int address);
 
-static char json[MAX_JSON_LENGTH]={0};
-char bitmap[MAX_BITMAP_LENGTH]={0};
-int json_size;
-int letters_amount;
+//static char json[MAX_MAIL_LENGTH]={0};
+//char bitmap[MAX_BITMAP_LENGTH]={0};
+//int json_size;
+//int letters_amount;
 
 jsmn_parser parser;
 jsmntok_t tokens[TOKENS];
 
-char temp_holder[1024];
+char key_holder[LETTER_LENGTH];
+int addr[MAX_LETTERS_AMOUNT];
 
 int main()
 {
- printf("%s",json);
- //exit(1);
- int adrs[1024];
- find_adr_by_theme(adrs, "Hi");
+ //TODO : METHOD DISPLAY
 
- char letter[MAX_LETTER_LENGTH];
-
- for (int i = 1; i <= adrs[0]; i++)
- {
-  get_json_value(letter, adrs[i]);
-  printf("%s\n", letter);
- }
-
+ //find_adr_by_theme(addr, "Hi");
+ change_bitmap(0,'0');
  return 1;
 }
 
-void delete_letter(int adr)
+int change_bitmap(int letter_address,char value)
 {
+ char bitmap_[MAX_BITMAP_LENGTH];
+ int bitmap_size = load_bitmap(bitmap_);
 
-}
+ char mail_[MAX_MAIL_LENGTH];
+ int mail_size = load_mail(mail_);
+ int letters_amount = LETTERS_AMOUNT(mail_size);
 
-int find_adr_by_id(int id)
-{
- load_resources();
-
- for (int i = 0, iter_id = 0; i < json_size; i++)
+ if (bitmap_size!=letters_amount)
  {
-  get_json_value(temp_holder, LETTER_KEY_ADR(i, ID));
-  iter_id = atoi(temp_holder);
+  printf("Failed to delete letter, because bitmap size!=letters amount");
+  return ERROR;
+ }
+ bitmap_[letter_address] = value;
 
-  if (iter_id == id)
-  {
-   //printf("MAIL_KEY = %d\n", LETTER_KEY_ADR(i, ID) - 2);
-   //printf("MAIL = %d\n", LETTER_ADR(i));
-   return LETTER_ADR(i);
-  }
+ FILE *fp = fopen(BITMAP_LOCATION, "w");
+
+ if (fp != NULL)
+ {
+
+  fputs(bitmap_, fp);
+  fclose(fp);
+  return SUCCESS;
  }
 
- return -1;
+ printf("Failed to write to bitmap in: {%s}\n", BITMAP_LOCATION);
+ return ERROR;
+}
+
+int find_adr_by_id(int id_)
+{
+ char mail_[MAX_MAIL_LENGTH];
+ int mail_size = load_mail(mail_);
+ int letters_amount = LETTERS_AMOUNT(mail_size);
+
+ for (int i = 0, iter_id_ = 0; i < letters_amount; i++)
+ {
+  get_json_value(mail_, key_holder, LETTER_KEY_ADR(i, ID));
+  iter_id_ = atoi(key_holder); // TODO: use strtool instead
+
+  if (iter_id_ == id_) return LETTER_ADR(i);
+  //printf("MAIL_KEY = %d\n", LETTER_KEY_ADR(i, ID) - 2);
+  //printf("MAIL = %d\n", LETTER_ADR(i));
+ }
+
+ return ERROR;
 }
 
 
 
 int find_adr_by_theme(int *dest_adrs, char *theme)
 {
- load_resources();
+ char mail_[MAX_MAIL_LENGTH];
+ int mail_size = load_mail(mail_);
+ int letters_amount = LETTERS_AMOUNT(mail_size);
 
  char *iter_theme;
 
- letters_amount = LETTERS_AMOUNT(json_size);
-
  for (int i = 0, j = 1; i < letters_amount; i++)
  {
-  get_json_value(temp_holder, LETTER_KEY_ADR(i, THEME));
-  iter_theme = temp_holder;
+  get_json_value(mail_,key_holder, LETTER_KEY_ADR(i, THEME));
+  iter_theme = key_holder;
 
 
   if (strstr(iter_theme, theme))
@@ -111,9 +137,15 @@ int find_adr_by_theme(int *dest_adrs, char *theme)
    dest_adrs[0] += 1;
    j++;
   }
+
+  for (int f = 1; f <= addr[0]; f++)
+  {
+   get_json_value(mail_, key_holder, addr[f]);
+   printf("%s\n", key_holder);
+  }
  }
 
- return (dest_adrs[0] != 0) ? 1 : -1;
+ return (dest_adrs[0] != 0) ? SUCCESS : ERROR;
 }
 
 int parse_json(char *json_, jsmn_parser parser_, jsmntok_t *tokens_, char *path_) // Returns json
@@ -121,12 +153,12 @@ int parse_json(char *json_, jsmn_parser parser_, jsmntok_t *tokens_, char *path_
  read_file(json_, path_);
  jsmn_init(&parser_);
 
- int json_size_ = jsmn_parse(&parser_, json_, strlen(json), tokens_, TOKENS);
+ int json_size_ = jsmn_parse(&parser_, json_, strlen(json_), tokens_, TOKENS);
 
  if (json_size_ < 0)
  {
   printf("Failed to parse JSON: {%d\n}", json_size_);
-  return -1;
+  return ERROR;
  }
 
  return json_size_;
@@ -134,48 +166,57 @@ int parse_json(char *json_, jsmn_parser parser_, jsmntok_t *tokens_, char *path_
 
 int read_file(char *buffer, char *path)
 {
- long length;
- FILE * f = fopen (path, "rb");
+ long length=0;
+ FILE * fp_ = fopen(path, "rb");
 
- if (f)
+ if (fp_)
  {
-  fseek (f, 0, SEEK_END);
-  length = ftell (f);
-  fseek (f, 0, SEEK_SET);
-  buffer = malloc (length);
+  fseek (fp_, 0, SEEK_END);
+  length = ftell (fp_);
+  fseek (fp_, 0, SEEK_SET);
+
   if (buffer)
   {
-   fread (buffer, 1, length, f);
+   fread (buffer, 1, length, fp_);
   }
-  fclose (f);
+  fclose (fp_);
  }
 
  // TODO: RECHECK if (buffer) {}
 
- printf("%s\n-----------\n",buffer);
+ //printf("%s\n-----------\n",buffer);
 
  if (buffer == NULL)
  {
   printf("Failed to read file: {%s}\n", path);
-  return -1;
+  return ERROR;
  }
- return 1;
+ return length;
 }
 
-void get_json_value(char *dest, int address)
+int get_json_value(char* json_, char *dest, int address)
 {
  jsmntok_t key = tokens[address];
  unsigned int length = key.end - key.start;
 
- memcpy(dest, &json[key.start], length);
+ memcpy(dest, &json_[key.start], length);
+
+ if (dest==NULL)
+ {
+  printf("Failed to get json value");
+  return ERROR;
+ }
+
  dest[length] = '\0';
+ return SUCCESS;
 }
 
-int load_resources()
+int load_mail(char* mail_) // Returns mail size
 {
- json_size = parse_json(json, parser, tokens, MAIL_LOCATION);
- letters_amount = LETTERS_AMOUNT(json_size);
+ return parse_json(mail_, parser, tokens, MAIL_LOCATION);
+}
 
- if (json_size == -1) return -1;
- return 1;
+int load_bitmap(char* bitmap_) // Returns bitmap size
+{
+ return read_file(bitmap_, BITMAP_LOCATION);
 }
