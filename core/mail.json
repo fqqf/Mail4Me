@@ -34,14 +34,14 @@
   {
     "id": 4,
     "sender": "Don@yandex.ru",
-    "receiver": "Anna@gmail",
+    "receiver": "Anna@gmail.com",
     "theme": "Hi, Anna.",
     "body": "How's the weather? I would like to come to you.",
     "reply_to": -1
   },
   {
     "id": 5,
-    "sender": "Anna@gmail",
+    "sender": "Anna@gmail.com",
     "receiver": "Don@yandex.ru",
     "theme": "Hi, Anna.",
     "body": "The weather is good. We are waiting for you to visit.",
@@ -50,14 +50,14 @@
   {
     "id": 6,
     "sender": "Emma@yandex.ru",
-    "receiver": "Alisa@yandex.ru",
-    "theme": "Hi? Alisa.",
+    "receiver": "Alice@yandex.ru",
+    "theme": "Hi? Alice.",
     "body": "What's your brother doing? He's not answering his phone.",
     "reply_to": -1
   },
   {
     "id": 7,
-    "sender": "Alisa@yandex.ru",
+    "sender": "Aliсe@yandex.ru",
     "receiver": "Emma@yandex.ru",
     "theme": "Hi, Mom.",
     "body": "He's playing with a friend in the backyard now.",
@@ -86,5 +86,85 @@
     "theme": "NO_THEME",
     "body": "It's okay. You can join us next month.",
     "reply_to": 9
+  },
+  {
+    "id": 11,
+    "sender": "Tom888@gmail.com",
+    "receiver": "John7@gmail.com",
+    "theme": "Hey, buddy.",
+    "body": "Do you still want to have a barbecue this weekend?",
+    "reply_to": -1
+  },
+  {
+    "id": 12,
+    "sender": "John7@gmail.com",
+    "receiver": "Tom888@gmail.com",
+    "theme": "Hi, Tom.",
+    "body": "Yes, we will be waiting for you in the backyard of our house.",
+    "reply_to": 11
+  },
+  {
+    "id": 13,
+    "sender": "Sara@hotmail.com",
+    "receiver": "Sam5@gmail.com",
+    "theme": "Hi, Sam!",
+    "body": "Did you see the last movie I sent to the general chat?",
+    "reply_to": -1
+  },
+  {
+    "id": 14,
+    "sender": "Sam5@gmail.com",
+    "receiver": "Sara@hotmail.com",
+    "theme": "Hi, Sara.",
+    "body": "No, I haven't. I had too much work to do.",
+    "reply_to": 13
+  },
+  {
+    "id": 15,
+    "sender": "Mia@gmail.com",
+    "receiver": "Lily@gmail.com",
+    "theme": "Hello, Lily.",
+    "body": "I am your new neighbour. I want to be your friend.",
+    "reply_to": -1
+  },
+  {
+    "id": 16,
+    "sender": "Lily@gmail.com",
+    "receiver": "Mia@gmail.com",
+    "theme": "Hello, Mia.",
+    "body": "I'd love to be your friend.",
+    "reply_to": 15
+  },
+  {
+    "id": 17,
+    "sender": "Charlie154@yandex.ru",
+    "receiver": "Mark@yandex.ru",
+    "theme": "Hi, Mark.",
+    "body": "I wanted to ask you something. What’s your favourite season?",
+    "reply_to": -1
+  },
+  {
+    "id": 18,
+    "sender": "Mark@yandex.ru",
+    "receiver": "Charlie154@yandex.ru",
+    "theme": "Hey, Charlie.",
+    "body": "My favourite season is summer.",
+    "reply_to": 17
+  },
+  {
+    "id": 19,
+    "sender": "Charlie154@yandex.ru",
+    "receiver": "Mark@yandex.ru",
+    "theme": "NO_THEME",
+    "body": "I also like summer very much.",
+    "reply_to": 18
+  },
+  {
+    "id": 23,
+    "sender": "Charlie154@yandex.ru",
+    "receiver": "Mark@yandex.ru",
+    "theme": "NO_THEME",
+    "body": "I also like summer very much.",
+    "reply_to": 19
   }
 ]

@@ -4,13 +4,15 @@
 #include "lib/jsmn_parser.h"
 
 #define KEYS 6
-#define TOKENS 256
+#define TOKENS 512
 
-#define MAX_JSON_LENGTH 4095
+#define MAX_JSON_LENGTH 4096
+#define MAX_BITMAP_LENGTH 512
 #define MAX_KEY_LENGTH 512
 #define MAX_LETTER_LENGTH 1024
 
 #define MAIL_LOCATION "..\\core\\mail.json"
+#define BITMAP_LOCATION "..\\core\\bitmap.map"
 
 #define LETTER_KEY_ADR(MAIL_NUM, KEY_NUM) MAIL_NUM*(KEYS*2)+(MAIL_NUM+1)+(2*(KEY_NUM+1))
 #define LETTER_ADR(MAIL_NUM) MAIL_NUM*(KEYS*2)+(MAIL_NUM+1)
@@ -34,7 +36,8 @@ int find_adr_by_id(int id);
 int find_adr_by_theme(int *dest_adrs, char *theme);
 void get_json_value(char *dest, int address);
 
-char json[MAX_JSON_LENGTH]={0};
+static char json[MAX_JSON_LENGTH]={0};
+char bitmap[MAX_BITMAP_LENGTH]={0};
 int json_size;
 int letters_amount;
 
@@ -86,10 +89,7 @@ int find_adr_by_id(int id)
  return -1;
 }
 
-void delete_letter(int addr)
-{
 
-}
 
 int find_adr_by_theme(int *dest_adrs, char *theme)
 {
@@ -132,14 +132,29 @@ int parse_json(char *json_, jsmn_parser parser_, jsmntok_t *tokens_, char *path_
  return json_size_;
 }
 
-int read_file(char *dest, char *path)
+int read_file(char *buffer, char *path)
 {
- FILE *fptr;
- fptr = fopen(path, "r");
- fread(dest, MAX_JSON_LENGTH, 1, fptr);
- fclose(fptr);
+ long length;
+ FILE * f = fopen (path, "rb");
 
- if (fptr == NULL)
+ if (f)
+ {
+  fseek (f, 0, SEEK_END);
+  length = ftell (f);
+  fseek (f, 0, SEEK_SET);
+  buffer = malloc (length);
+  if (buffer)
+  {
+   fread (buffer, 1, length, f);
+  }
+  fclose (f);
+ }
+
+ // TODO: RECHECK if (buffer) {}
+
+ printf("%s\n-----------\n",buffer);
+
+ if (buffer == NULL)
  {
   printf("Failed to read file: {%s}\n", path);
   return -1;
