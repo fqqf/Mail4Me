@@ -24,7 +24,7 @@
 #define LETTER_KEY_ADR2(LETTER_ADR, KEY_NUM) LETTER_ADR+(2*(KEY_NUM+1))
 #define LETTERS_AMOUNT(MAIL_SIZE) (MAIL_SIZE-1)/(KEYS*2+1)
 
-#define CHECK_BITMAP(BITMAP_SIZE, ARRAY_SIZE) ()
+#define CREATE_LETTER(ID, SENDER, RECEIVER, THEME, BODY, REPLY_TO) "{\n    \"id\": " ID ",\n    \"sender\": \"" SENDER "\",\n    \"receiver\": \"" RECEIVER "\",\n    \"theme\": \"" THEME "\",\n    \"body\": \"" BODY "\",\n    \"reply_to\": " REPLY_TO "\n  }"
 
 #define ID 0
 #define SENDER 1
@@ -44,9 +44,9 @@ int parse_json(char *json_, jsmn_parser parser_, jsmntok_t *tokens_, char *path_
 int load_bitmap(char* bitmap_);
 int load_mail(char* mail_);
 
-int read_file(char *string, char path[100]);
+int read_file(char *buffer, char *path);
 
-int change_bmp(char* mail, char* bitmap, int letter_address, char value);
+int change_bmp(char* mail, char* bitmap, int bmp_id, char value);
 int find_adr_by_id(char* mail, int id);
 int find_adr_by_theme(char* mail, int *dest_adrs, char *theme);
 int get_value_by_addr(char* mail, char *dest, int address);
@@ -80,6 +80,7 @@ int is_bmp_valid()
  }
  return 1;
 }
+
 
 void replace_substr(char *origin, char *substr, char *new_substr)
 {
@@ -116,13 +117,31 @@ void replace_substr(char *origin, char *substr, char *new_substr)
  }
 }
 
+int write(char *str, char* location)
+{
+ FILE *fp = fopen(location, "w");
+
+ if (fp != NULL)
+ {
+
+  fputs(str, fp);
+  fclose(fp);
+  printf("\nwrote to %s\n", location);
+  return SUCCESS;
+ }
+
+ printf("Failed to write to: {%s}\n", location);
+ return ERROR;
+}
+
 int add_letter(char* mail, char* bitmap, char* args)
 {
- char* mail_ = (mail==NULL) ? alloca(MAX_MAIL_LENGTH* sizeof(char)) : mail;
- char* bitmap_ = (bitmap==NULL) ? alloca(MAX_BITMAP_LENGTH* sizeof(char)) : bitmap;
+ char* mail_;
+ char* bitmap_;
 
- bmp_size = load_bitmap(bitmap_);
- mail_size = load_mail(mail_);
+ if (mail==NULL){ mail_ = malloc(MAX_MAIL_LENGTH* sizeof(char)); mail_size = load_mail(mail_); } else mail_ = mail;
+ if (bitmap==NULL){ bitmap_ = malloc(MAX_BITMAP_LENGTH* sizeof(char)); bmp_size = load_bitmap(bitmap_); } else bitmap_ = bitmap;
+
  letters_amount = LETTERS_AMOUNT(mail_size);
 
  if (!is_bmp_valid()) return ERROR;
@@ -138,44 +157,38 @@ int add_letter(char* mail, char* bitmap, char* args)
   int adr;
   adr = find_adr_by_id(mail_,free_index);
   get_value_by_addr(mail_, value_holder,adr);
-  printf("%s",value_holder);
 
-  replace_substr(mail_,value_holder,"{\"id\":replaced}");
-  printf("\n\n\n\n--------------------\n\n\n\n%s",mail_);
+  replace_substr(mail_,value_holder,CREATE_LETTER("00","0000","0000","00","00", "-1"));
+  return write(mail_,MAIL_LOCATION);
+  //change_bmp(mail_,bitmap_,free_index,BMP_ACTIVE);
  }
+
+
 }
 
-int change_bmp(char* mail, char* bitmap, int letter_address, char value)
+int change_bmp(char* mail, char* bitmap, int bmp_id, char value)
 {
- char* mail_ = (mail==NULL) ? alloca(MAX_MAIL_LENGTH* sizeof(char)) : mail;
- char* bitmap_ = (bitmap==NULL) ? alloca(MAX_BITMAP_LENGTH* sizeof(char)) : bitmap;
+ char* mail_;
+ char* bitmap_;
 
- bmp_size = load_bitmap(bitmap_);
- mail_size = load_mail(mail_);
+ if (mail==NULL){ mail_ = malloc(MAX_MAIL_LENGTH* sizeof(char)); mail_size = load_mail(mail_); } else mail_ = mail;
+ if (bitmap==NULL){ bitmap_ = malloc(MAX_BITMAP_LENGTH* sizeof(char)); bmp_size = load_bitmap(bitmap_); } else bitmap_ = bitmap;
+
  letters_amount = LETTERS_AMOUNT(mail_size);
 
  if (!is_bmp_valid()) return ERROR;
 
- bitmap_[letter_address] = value;
+ bitmap_[bmp_id] = value;
 
- FILE *fp = fopen(BITMAP_LOCATION, "w");
-
- if (fp != NULL)
- {
-
-  fputs(bitmap_, fp);
-  fclose(fp);
-  return SUCCESS;
- }
-
- printf("Failed to write to bitmap in: {%s}\n", BITMAP_LOCATION);
- return ERROR;
+ write(bitmap_, BITMAP_LOCATION);
 }
 
 int find_adr_by_id(char* mail, int id_)
 {
- char* mail_ = (mail==NULL) ? alloca(MAX_MAIL_LENGTH* sizeof(char)) : mail;
- mail_size = load_mail(mail_);
+ char* mail_;
+
+ if (mail==NULL){ mail_ = malloc(MAX_MAIL_LENGTH* sizeof(char)); mail_size = load_mail(mail_); } else mail_ = mail;
+
  letters_amount = LETTERS_AMOUNT(mail_size);
 
  for (int i = 0, iter_id_ = 0; i < letters_amount; i++)
@@ -195,10 +208,11 @@ int find_adr_by_id(char* mail, int id_)
 
 int find_adr_by_theme(char* mail, int *dest_adrs, char *theme)
 {
- char* mail_ = (mail==NULL) ? alloca(MAX_MAIL_LENGTH* sizeof(char)) : mail;
+ char* mail_;
 
- int mail_size = load_mail(mail_);
- int letters_amount = LETTERS_AMOUNT(mail_size);
+ if (mail==NULL){ mail_ = malloc(MAX_MAIL_LENGTH* sizeof(char)); mail_size = load_mail(mail_); } else mail_ = mail;
+
+ letters_amount = LETTERS_AMOUNT(mail_size);
 
  char *iter_theme;
 
@@ -228,6 +242,7 @@ int find_adr_by_theme(char* mail, int *dest_adrs, char *theme)
 int parse_json(char *json_, jsmn_parser parser_, jsmntok_t *tokens_, char *path_) // Returns json
 {
  read_file(json_, path_);
+
  jsmn_init(&parser_);
 
  int json_size_ = jsmn_parse(&parser_, json_, strlen(json_), tokens_, TOKENS);
@@ -237,6 +252,8 @@ int parse_json(char *json_, jsmn_parser parser_, jsmntok_t *tokens_, char *path_
   printf("Failed to parse JSON: {%d\n}", json_size_);
   return ERROR;
  }
+
+
 
  return json_size_;
 }
@@ -273,9 +290,9 @@ int read_file(char *buffer, char *path)
 
 int get_value_by_addr(char* mail, char *dest, int address)
 {
- if (mail!=NULL) goto copy_mail;
  char* mail_;
- copy_mail: mail_ = mail;
+
+ if (mail==NULL){ mail_ = malloc(MAX_MAIL_LENGTH* sizeof(char)); mail_size = load_mail(mail_); } else mail_ = mail;
 
  jsmntok_t key = tokens[address];
  unsigned int length = key.end - key.start;
@@ -292,12 +309,15 @@ int get_value_by_addr(char* mail, char *dest, int address)
  return SUCCESS;
 }
 
-int load_mail(char* mail_) // Returns mail size
+int load_mail(char* mail) // Returns mail size
 {
- return parse_json(mail_, parser, tokens, MAIL_LOCATION);
+ printf("%s\n\n","LOADING MAILz");
+ int r = parse_json(mail, parser, tokens, MAIL_LOCATION);
+ printf("MAIL AMOUNT IS : %s\n",mail);
+ return r;
 }
 
-int load_bitmap(char* bitmap_) // Returns bitmap size
+int load_bitmap(char* bitmap) // Returns bitmap size
 {
- return read_file(bitmap_, BITMAP_LOCATION);
+ return read_file(bitmap, BITMAP_LOCATION);
 }
