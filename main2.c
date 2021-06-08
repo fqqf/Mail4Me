@@ -36,6 +36,7 @@
 void replace_substr(char *origin, char *substr, char *new_substr);
 
 int mail_size, bmp_size, letters_amount;
+int alloc_mail_len;
 
 jsmn_parser parser;
 jsmntok_t tokens[TOKENS];
@@ -50,13 +51,13 @@ int alloc_mem(char** buf, FILE* infile)
  if (infile == NULL) return FAIL;
 
  fseek(infile, 0L, SEEK_END);
- long numbytes = ftell(infile);
+ long numbytes = ftell(infile)+1;
  fseek(infile, 0L, SEEK_SET);
 
- *buf = (char *) calloc(numbytes, sizeof(char));
+ *buf = (char *) malloc(numbytes* sizeof(char));
 
- printf("Allocating mem\n");
- return numbytes;
+ printf("Allocating mem: %ld\n",numbytes);
+ return numbytes* sizeof(char);
 }
 
 void free_mem(char** buf)
@@ -70,7 +71,7 @@ void free_mem(char** buf)
 int is_bmp_valid()
 {
  if (bmp_size==letters_amount) return 1;
- printf("Failed to commit operation, because bitmap size!=letters amount\n"); return 0;
+ printf("Failed to commit operation, because bitmap size(%d)!=letters amount(%d)\n", bmp_size, letters_amount); return 0;
 }
 
 int write(char *str, char* location)
@@ -81,7 +82,7 @@ int write(char *str, char* location)
  {
   fputs(str, fp);
   fclose(fp);
-  //printf("\nwrote to %s\n", location);
+  printf("\nwrote to %s\n", location);
   return SUCCESS;
  }
 
@@ -99,12 +100,14 @@ int read_file(char** buf, char *path) // Check if buf is null before calling !
 
  fread(*buf, sizeof(char), numbytes, infile);
  fclose(infile);
+ (*buf)[numbytes-1]='\0';
+ printf("\nCHECKER:%s\n",*buf);
  return numbytes;
 }
 
 int parse_json(char **json_, jsmn_parser parser_, jsmntok_t *tokens_, char *path_) // Returns json
 {
- read_file(json_, path_);
+ alloc_mail_len = read_file(json_, path_);
  jsmn_init(&parser_);
 
  int json_size_ = jsmn_parse(&parser_, *json_, strlen(*json_), tokens_, TOKENS);
@@ -115,10 +118,14 @@ int parse_json(char **json_, jsmn_parser parser_, jsmntok_t *tokens_, char *path
 
 int load_mail() {
  mail_size = parse_json(_pmail, parser, tokens, MAIL_LOCATION);
+ //printf("\nMAIL:%s\n",*_pmail);
  return mail_size;
 } // Returns mail size
 
-int load_bmp() {bmp_size = read_file(_pbmp, BITMAP_LOCATION);}  // Returns bitmap size
+int load_bmp() {
+ bmp_size = read_file(_pbmp, BITMAP_LOCATION);
+ //printf("\nBITMAP:%s\n",*_pbmp);
+}  // Returns bitmap size
 
 int get_value_by_adr(char *dest, int address)
 {
@@ -133,17 +140,21 @@ int get_value_by_adr(char *dest, int address)
 int get_adr_by_id(int id_)
 {
  letters_amount = LETTERS_AMOUNT(mail_size);
-
  char value_holder[MAX_MAIL_LENGTH];                                      /// TODO REMOVE IT ! USE SOMETHING ELSE
  for (int i = 0, iter_id_ = 0; i < letters_amount; i++)
  {
   get_value_by_adr(value_holder, LETTER_KEY_ADR(i, ID));
+  printf("VALUE:\n\n%s\n\n",value_holder);
   iter_id_ = atoi(value_holder); // TODO: use strtool instead
-  if (iter_id_ == id_) return LETTER_ADR(i);
+  if (iter_id_ == id_)
+  {
+   printf("%d=%d\n in %s",iter_id_,id_,value_holder);
+   return LETTER_ADR(i);
+  }
   //printf("MAIL_KEY = %d\n", LETTER_KEY_ADR(i, ID) - 2);
   //printf("MAIL = %d\n", LETTER_ADR(i));
  }
-
+ printf("Address was not found!\n\n");
  return ERROR;
 }
 
@@ -161,7 +172,6 @@ int add_letter()
  letters_amount = LETTERS_AMOUNT(mail_size);
 
  if (!is_bmp_valid()) return FAIL;
-
  char value_holder[MAX_MAIL_LENGTH];                                      /// TODO REMOVE IT ! USE SOMETHING ELSE
 
  int free_index = -1;
@@ -173,14 +183,14 @@ int add_letter()
  {
   int adr;
   adr = get_adr_by_id(free_index);
+  printf("\nFREE_INDEX: %d\n\nADDR: %d\n\n",free_index,adr);
   get_value_by_adr(value_holder,adr);
-
   char new_letter[LETTER_LENGTH];
   snprintf(new_letter, sizeof(new_letter), "{\n    \"id\": %d,\n    \"sender\": \"%s\",\n    \"receiver\": \"%s\",\n    \"theme\": \"%s\",\n    \"body\": \"%s\",\n    \"reply_to\": %s\n  }", free_index,"0000","0000","00","00", "-1");
 
-  printf("\n\n\nBEFORE: %s\n\n\n",*_pmail);
+ // printf("\n\n\nBEFORE: %s\n\n\n",*_pmail);
   replace_substr(*_pmail,value_holder,new_letter);
-  printf("\n\n\nAFTER: %s\n\n\n",*_pmail);
+//  printf("\n\n\nAFTER: %s\n\n\n",*_pmail);
   change_bmp(free_index,BMP_ACTIVE);
   return write(*_pmail,MAIL_LOCATION);
  }
@@ -215,11 +225,16 @@ int main()
  printf("Bonjour\n");
  load_mail();
  load_bmp();
- for (int i=0; i<bmp_size; i++)
+/* for (int i=0; i<bmp_size; i++)
  {
+
   add_letter();
+  free_mem(_pmail);
+  free_mem(_pbmp);
+  load_mail();
+  load_bmp();
  }
- free_mem(_pmail);
+ free_mem(_pmail);*/
  free_mem(_pbmp);
 }
 
@@ -233,7 +248,13 @@ void replace_substr(char *origin, char *substr, char *new_substr)
  origin_len = strlen(origin); // TODO: replace strlen
  substr_len = strlen(substr);
  new_substr_len = strlen(new_substr);
+ realloc(origin,(alloc_mail_len-substr_len* sizeof(char))+new_substr_len* sizeof(char));
+ printf("BF_SIZE: %d\n",alloc_mail_len);
+// mail_size = ((origin_len-substr_len)+new_substr_len) * sizeof(char);
+ printf("AF_SIZE: (%d-%d)+%d\n",alloc_mail_len,substr_len* sizeof(char),new_substr_len* sizeof(char));
+ printf("\n\n\n\n\n\n%s\n\n\n\n\n\n",substr);
 
+ alloc_mail_len = (alloc_mail_len-substr_len* sizeof(char))+new_substr_len* sizeof(char);
  for (i = 0; i < origin_len; i++)
  {
   flag = 0;
