@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <malloc.h>
 #include <unknwn.h>
-#include "lib/jsmn_parser.h"
+#include "jsmn_parser.h"
 
 #define KEYS 6
 #define KILOBYTE 1024
@@ -11,8 +11,8 @@
 #define MAX_LETTERS_AMOUNT 100
 #define MAX_MAIL_LENGTH MAX_LETTERS_AMOUNT*LETTER_LENGTH+KILOBYTE
 #define TOKENS (MAX_LETTERS_AMOUNT*KEYS*2)+MAX_LETTERS_AMOUNT+1
-#define MAIL_LOCATION "..\\core\\mail.json"
-#define BITMAP_LOCATION "..\\core\\bitmap.map"
+#define MAIL_LOCATION "..\\lib\\mail.json"
+#define BITMAP_LOCATION "..\\lib\\bitmap.map"
 #define SUCCESS 0
 #define FAIL -1
 
@@ -301,25 +301,6 @@ int get_adrs_from_chain(int *dest_adrs, char *id1, char *id2) // adrs[0] stores 
 #define CHANGE_BMP  load_mail();load_bmp();change_bmp(0,BMP_REMOVED);free_mem(_pmail);free_mem(_pbmp);
 #define ADD_LETTERS_REPLACE  load_mail();load_bmp();for (int i=0; i<bmp_size; i++){add_letter();free_mem(_pmail);free_mem(_pbmp);load_mail();load_bmp();}free_mem(_pmail);free_mem(_pbmp);
 #define ADD_LETTER_APPEND  load_mail();load_bmp();add_letter();free_mem(_pmail);free_mem(_pbmp);
-
-int main()
-{
- printf("Bonjour\n");
- int adrs[MAX_LETTERS_AMOUNT] = {0};
- load_mail();
- get_adrs_from_chain(adrs, "Harry@gmail.com","Olivia@hotmail.com");
- char dest[LETTER_LENGTH];
- for (int i = 1; i <= adrs[0]; i++)
- {
-  get_value_by_adr(dest, adrs[i]);
-  printf("%s\n", dest);
- }
- free_mem(_pmail);
- return 1;
-
-
- return 1;
-}
 
 
 void replace_letter(char *origin, char *substr, char *new_substr)
