@@ -33,7 +33,8 @@ int mail_size, bmp_size, letters_amount;
 jsmn_parser parser;
 jsmntok_t tokens[TOKENS];
 
-char* mail;
+char* _mail;
+char** _pmail = &_mail;
 char* bmp;
 
 int alloc_mem(char** buf, FILE* infile)
@@ -45,7 +46,8 @@ int alloc_mem(char** buf, FILE* infile)
  fseek(infile, 0L, SEEK_SET);
 
  *buf = (char *) calloc(numbytes, sizeof(char));
- printf("BUF == NULL : %d\n",buf==NULL);
+
+ printf("Allocating mem\n");
  return numbytes;
 }
 
@@ -54,6 +56,7 @@ void free_mem(char** buf)
  if (buf==NULL) return;
  free(*buf);
  *buf = NULL;
+ printf("Freeing mem\n");
 }
 
 int is_bmp_valid()
@@ -83,50 +86,51 @@ int read_file(char** buf, char *path) // Check if buf is null before calling !
  infile = fopen(path, "r");
 
  long numbytes = alloc_mem(buf, infile);
- printf("BUF == NULL : %d\n",buf==NULL);
- if (buf == NULL || numbytes == FAIL) {printf("Failed to read file: {%s}",path);return FAIL;}
+
+ if (*buf == NULL || numbytes == FAIL) {printf("Failed to read file: {%s}",path);return FAIL;}
 
  fread(*buf, sizeof(char), numbytes, infile);
  fclose(infile);
  return SUCCESS;
 }
 
-int parse_json(char *json_, jsmn_parser parser_, jsmntok_t *tokens_, char *path_) // Returns json
+int parse_json(char **json_, jsmn_parser parser_, jsmntok_t *tokens_, char *path_) // Returns json
 {
- read_file(&json_, path_);
- printf("%s",json_);
+ read_file(json_, path_);
  jsmn_init(&parser_);
 
- int json_size_ = jsmn_parse(&parser_, json_, strlen(json_), tokens_, TOKENS);
+ int json_size_ = jsmn_parse(&parser_, *json_, strlen(*json_), tokens_, TOKENS);
 
  if (json_size_ < 0) {printf("Failed to parse JSON: {%d\n}", json_size_);return FAIL;}
  return json_size_;
 }
 
-int load_mail() {return mail_size = parse_json(mail, parser, tokens, MAIL_LOCATION);} // Returns mail size
+int load_mail() {
+ mail_size = parse_json(_pmail, parser, tokens, MAIL_LOCATION);
+ return mail_size;
+} // Returns mail size
 
 int load_bmp() {return bmp_size = read_file(bmp, BITMAP_LOCATION);}  // Returns bitmap size
 
 int get_value_by_adr(char *dest, int address)
 {
  short free_mail=0;
- if (mail==NULL) {load_mail(); free_mail = TRUE;}
+ if (*_pmail==NULL) printf("pmail is null\n");
+ if (*_pmail==NULL) {load_mail(); free_mail = TRUE;}
  jsmntok_t key = tokens[address];
  unsigned int length = key.end - key.start;
 
- memcpy(dest, &mail[key.start], length); // TODO: Free memory
-
- if (dest==NULL) {printf("Failed to get json value");if (free_mail) free_mem(&mail);return FAIL;}
-
+ memcpy(dest, &((*_pmail)[key.start]), length); // TODO: Free memory
+ if (dest==NULL) {printf("Failed to get json value");if (free_mail) free_mem(_pmail);return FAIL;}
  dest[length] = '\0';
- if (free_mail) free_mem(&mail);
+ if (free_mail) free_mem(_pmail);
  return SUCCESS;
 }
 
 int get_adrs_by_theme(int *dest_adrs, char *theme) // adrs[0] stores length
 {
  short free_mail=0;
- if (mail==NULL) {load_mail(); free_mail = TRUE;}
+ if (*_pmail==NULL) {load_mail(); free_mail = TRUE;}
 
  letters_amount = LETTERS_AMOUNT(mail_size);
  char iter_theme[LETTER_LENGTH]; // TODO: Use key_len (currently THEME-key len)
@@ -141,8 +145,9 @@ int get_adrs_by_theme(int *dest_adrs, char *theme) // adrs[0] stores length
    j++;
   }
  }
+ if (free_mail) free_mem(_pmail);
 
- if (free_mail) free_mem(&mail);
+
  return (dest_adrs[0] != 0) ? SUCCESS : FAIL;
 }
 
@@ -150,9 +155,10 @@ int main()
 {
  printf("Bonjour\n");
 
- int adrs[MAX_LETTERS_AMOUNT];
- get_adrs_by_theme(adrs, "Hi");
+ int adrs[MAX_LETTERS_AMOUNT] = {0};
 
+ load_mail();
+ get_adrs_by_theme(adrs, "Hi");
  char dest[LETTER_LENGTH];
 
  for (int i = 1; i <= adrs[0]; i++)
@@ -160,6 +166,8 @@ int main()
   get_value_by_adr(dest, adrs[i]);
   printf("%s\n", dest);
  }
+ free_mem(_pmail);
+ return 1;
 }
 
 void replace_substr(char *origin, char *substr, char *new_substr)
