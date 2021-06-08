@@ -30,6 +30,9 @@
 #define BODY 4
 #define REPLY_TO 5
 
+#define CREATE_LETTER(ID, SENDER, RECEIVER, THEME, BODY, REPLY_TO) "{\n    \"id\": " #ID ",\n    \"sender\": \"" SENDER "\",\n    \"receiver\": \"" RECEIVER "\",\n    \"theme\": \"" THEME "\",\n    \"body\": \"" BODY "\",\n    \"reply_to\": " REPLY_TO "\n  }"
+
+
 void replace_substr(char *origin, char *substr, char *new_substr);
 
 int mail_size, bmp_size, letters_amount;
@@ -39,6 +42,8 @@ jsmntok_t tokens[TOKENS];
 
 char *_mail, *_bmp;
 char **_pmail = &_mail, **_pbmp = &_bmp;
+
+// TODO: make value_holder busy/not_busy etc;
 
 int alloc_mem(char** buf, FILE* infile)
 {
@@ -119,13 +124,29 @@ int get_value_by_adr(char *dest, int address)
 {
  jsmntok_t key = tokens[address];
  unsigned int length = key.end - key.start;
-
  memcpy(dest, &((*_pmail)[key.start]), length); // TODO: Free memory
  if (dest==NULL) {printf("Failed to get json value");return FAIL;}
  dest[length] = '\0';
-
  return SUCCESS;
 }
+
+int get_adr_by_id(int id_)
+{
+ letters_amount = LETTERS_AMOUNT(mail_size);
+
+ char value_holder[MAX_MAIL_LENGTH];                                      /// TODO REMOVE IT ! USE SOMETHING ELSE
+ for (int i = 0, iter_id_ = 0; i < letters_amount; i++)
+ {
+  get_value_by_adr(value_holder, LETTER_KEY_ADR(i, ID));
+  iter_id_ = atoi(value_holder); // TODO: use strtool instead
+  if (iter_id_ == id_) return LETTER_ADR(i);
+  //printf("MAIL_KEY = %d\n", LETTER_KEY_ADR(i, ID) - 2);
+  //printf("MAIL = %d\n", LETTER_ADR(i));
+ }
+
+ return ERROR;
+}
+
 
 int change_bmp(int bmp_id, char value)
 {
@@ -135,16 +156,47 @@ int change_bmp(int bmp_id, char value)
  write(*_pbmp, BITMAP_LOCATION);
 }
 
+int add_letter()
+{
+ letters_amount = LETTERS_AMOUNT(mail_size);
+
+ if (!is_bmp_valid()) return FAIL;
+
+ char value_holder[MAX_MAIL_LENGTH];                                      /// TODO REMOVE IT ! USE SOMETHING ELSE
+
+ int free_index = -1;
+ for (int i=0; i<bmp_size; i++) if ((*_pbmp)[i]==BMP_REMOVED) {free_index=i; break;}
+ if (free_index==-1)
+ {
+
+ } else
+ {
+  int adr;
+  adr = get_adr_by_id(free_index);
+  get_value_by_adr(value_holder,adr);
+
+  char new_letter[LETTER_LENGTH];
+  snprintf(new_letter, sizeof(new_letter), "{\n    \"id\": %d,\n    \"sender\": \"%s\",\n    \"receiver\": \"%s\",\n    \"theme\": \"%s\",\n    \"body\": \"%s\",\n    \"reply_to\": %s\n  }", free_index,"0000","0000","00","00", "-1");
+
+  printf("\n\n\nBEFORE: %s\n\n\n",*_pmail);
+  replace_substr(*_pmail,value_holder,new_letter);
+  printf("\n\n\nAFTER: %s\n\n\n",*_pmail);
+  change_bmp(free_index,BMP_ACTIVE);
+  return write(*_pmail,MAIL_LOCATION);
+ }
+}
+
+
 
 int get_adrs_by_theme(int *dest_adrs, char *theme) // adrs[0] stores length
 {
  letters_amount = LETTERS_AMOUNT(mail_size);
- char iter_theme[LETTER_LENGTH]; // TODO: Use key_len (currently THEME-key len)
+ char value_holder[MAX_MAIL_LENGTH];                                      /// TODO REMOVE IT ! USE SOMETHING ELSE
 
  for (int i = 0, j = 1; i < letters_amount; i++)
  {
-  get_value_by_adr(iter_theme, LETTER_KEY_ADR(i, THEME));
-  if (strstr(iter_theme, theme))
+  get_value_by_adr(value_holder, LETTER_KEY_ADR(i, THEME));
+  if (strstr(value_holder, theme))
   {
    dest_adrs[j] = LETTER_ADR(i);
    dest_adrs[0] += 1;
@@ -161,8 +213,14 @@ int get_adrs_by_theme(int *dest_adrs, char *theme) // adrs[0] stores length
 int main()
 {
  printf("Bonjour\n");
-
-
+ load_mail();
+ load_bmp();
+ for (int i=0; i<bmp_size; i++)
+ {
+  add_letter();
+ }
+ free_mem(_pmail);
+ free_mem(_pbmp);
 }
 
 
