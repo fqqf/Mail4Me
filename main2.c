@@ -217,7 +217,7 @@ int add_letter()
 int get_adrs_by_theme(int *dest_adrs, char *theme) // adrs[0] stores length
 {
  letters_amount = LETTERS_AMOUNT(mail_size);
- char value_holder[MAX_MAIL_LENGTH];   /// TODO REPLACE
+ char value_holder[LETTER_LENGTH];   /// TODO REPLACE
 
  for (int i = 0, j = 1; i < letters_amount; i++)
  {
@@ -233,19 +233,90 @@ int get_adrs_by_theme(int *dest_adrs, char *theme) // adrs[0] stores length
  return (dest_adrs[0] != 0) ? SUCCESS : FAIL;
 }
 
+int get_adrs_by_sender(int *dest_adrs, char *sender) // adrs[0] stores length
+{
+ letters_amount = LETTERS_AMOUNT(mail_size);
+ char value_holder[LETTER_LENGTH];   /// TODO REPLACE
+
+ for (int i = 0, j = 1; i < letters_amount; i++)
+ {
+  get_value_by_adr(value_holder, LETTER_KEY_ADR(i, SENDER));
+  if (strcmp(value_holder,sender)==0)
+  {
+   dest_adrs[j] = LETTER_ADR(i);
+   dest_adrs[0] += 1;
+   j++;
+  }
+ }
+
+ return (dest_adrs[0] != 0) ? SUCCESS : FAIL;
+}
+
+int get_adrs_by_receiver(int *dest_adrs, char *receiver) // adrs[0] stores length
+{
+ letters_amount = LETTERS_AMOUNT(mail_size);
+ char value_holder[LETTER_LENGTH];   /// TODO REPLACE
+
+ for (int i = 0, j = 1; i < letters_amount; i++)
+ {
+  get_value_by_adr(value_holder, LETTER_KEY_ADR(i, SENDER));
+  if (strcmp(value_holder,receiver)==0)
+  {
+   dest_adrs[j] = LETTER_ADR(i);
+   dest_adrs[0] += 1;
+   j++;
+  }
+ }
+
+ return (dest_adrs[0] != 0) ? SUCCESS : FAIL;
+}
+
+#define cmp(A,B) (strcmp(A,B)==0)
+
+int get_adrs_from_chain(int *dest_adrs, char *id1, char *id2) // adrs[0] stores length
+{
+ letters_amount = LETTERS_AMOUNT(mail_size);
+ char sender_[MAX_MAIL_LENGTH];   /// TODO REPLACE
+ char receiver_[MAX_MAIL_LENGTH];   /// TODO REPLACE
+
+
+ for (int i = 0, j = 1; i < letters_amount; i++)
+ {
+  get_value_by_adr(sender_, LETTER_KEY_ADR(i, SENDER));
+  get_value_by_adr(receiver_, LETTER_KEY_ADR(i, RECEIVER));
+  if ((cmp(sender_, id1) && cmp(receiver_, id2)) || (cmp(sender_, id2) && cmp(receiver_, id1)))
+  {
+   dest_adrs[j] = LETTER_ADR(i);
+   dest_adrs[0] += 1;
+   j++;
+  }
+ }
+
+ return (dest_adrs[0] != 0) ? SUCCESS : FAIL;
+}
+
+
+
 #define GET_BY_THEME int adrs[MAX_LETTERS_AMOUNT] = {0};load_mail();get_adrs_by_theme(adrs, "Hi");char dest[LETTER_LENGTH];for (int i = 1; i <= adrs[0]; i++){get_value_by_adr(dest, adrs[i]);printf("%s\n", dest);}free_mem(_pmail);return 1;
 #define CHANGE_BMP  load_mail();load_bmp();change_bmp(0,BMP_REMOVED);free_mem(_pmail);free_mem(_pbmp);
 #define ADD_LETTERS_REPLACE  load_mail();load_bmp();for (int i=0; i<bmp_size; i++){add_letter();free_mem(_pmail);free_mem(_pbmp);load_mail();load_bmp();}free_mem(_pmail);free_mem(_pbmp);
+#define ADD_LETTER_APPEND  load_mail();load_bmp();add_letter();free_mem(_pmail);free_mem(_pbmp);
 
 int main()
 {
  printf("Bonjour\n");
+ int adrs[MAX_LETTERS_AMOUNT] = {0};
  load_mail();
- load_bmp();
- add_letter();
-
+ get_adrs_from_chain(adrs, "Harry@gmail.com","Olivia@hotmail.com");
+ char dest[LETTER_LENGTH];
+ for (int i = 1; i <= adrs[0]; i++)
+ {
+  get_value_by_adr(dest, adrs[i]);
+  printf("%s\n", dest);
+ }
  free_mem(_pmail);
- free_mem(_pbmp);
+ return 1;
+
 
  return 1;
 }
@@ -260,7 +331,7 @@ void replace_letter(char *origin, char *substr, char *new_substr)
  origin_len = strlen(origin); // TODO: replace strlen
  substr_len = strlen(substr);
  new_substr_len = strlen(new_substr);
- realloc(origin,alloc_mail_len=((alloc_mail_len-substr_len* sizeof(char))+new_substr_len* sizeof(char)));
+ realloc(origin,alloc_mail_len=((alloc_mail_len-substr_len* sizeof(char))+new_substr_len* sizeof(char))); // TODO: Remove assignment
 
  for (i = 0; i < origin_len; i++)
  {
