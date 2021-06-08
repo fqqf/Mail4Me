@@ -15,6 +15,10 @@
 #define BITMAP_LOCATION "..\\core\\bitmap.map"
 #define SUCCESS 0
 #define FAIL -1
+
+#define BMP_ACTIVE '1'
+#define BMP_REMOVED '0'
+
 #define LETTER_KEY_ADR(MAIL_NUM, KEY_NUM) MAIL_NUM*(KEYS*2)+(MAIL_NUM+1)+(2*(KEY_NUM+1))
 #define LETTER_ADR(MAIL_NUM) MAIL_NUM*(KEYS*2)+(MAIL_NUM+1)
 #define LETTER_KEY_ADR2(LETTER_ADR, KEY_NUM) LETTER_ADR+(2*(KEY_NUM+1))
@@ -33,9 +37,8 @@ int mail_size, bmp_size, letters_amount;
 jsmn_parser parser;
 jsmntok_t tokens[TOKENS];
 
-char* _mail;
-char** _pmail = &_mail;
-char* bmp;
+char *_mail, *_bmp;
+char **_pmail = &_mail, **_pbmp = &_bmp;
 
 int alloc_mem(char** buf, FILE* infile)
 {
@@ -62,7 +65,7 @@ void free_mem(char** buf)
 int is_bmp_valid()
 {
  if (bmp_size==letters_amount) return 1;
- printf("Failed to commit operation, because bitmap size!=letters amount"); return 0;
+ printf("Failed to commit operation, because bitmap size!=letters amount\n"); return 0;
 }
 
 int write(char *str, char* location)
@@ -73,7 +76,7 @@ int write(char *str, char* location)
  {
   fputs(str, fp);
   fclose(fp);
-  printf("\nwrote to %s\n", location);
+  //printf("\nwrote to %s\n", location);
   return SUCCESS;
  }
 
@@ -91,7 +94,7 @@ int read_file(char** buf, char *path) // Check if buf is null before calling !
 
  fread(*buf, sizeof(char), numbytes, infile);
  fclose(infile);
- return SUCCESS;
+ return numbytes;
 }
 
 int parse_json(char **json_, jsmn_parser parser_, jsmntok_t *tokens_, char *path_) // Returns json
@@ -110,28 +113,31 @@ int load_mail() {
  return mail_size;
 } // Returns mail size
 
-int load_bmp() {return bmp_size = read_file(bmp, BITMAP_LOCATION);}  // Returns bitmap size
+int load_bmp() {bmp_size = read_file(_pbmp, BITMAP_LOCATION);}  // Returns bitmap size
 
 int get_value_by_adr(char *dest, int address)
 {
- short free_mail=0;
- if (*_pmail==NULL) printf("pmail is null\n");
- if (*_pmail==NULL) {load_mail(); free_mail = TRUE;}
  jsmntok_t key = tokens[address];
  unsigned int length = key.end - key.start;
 
  memcpy(dest, &((*_pmail)[key.start]), length); // TODO: Free memory
- if (dest==NULL) {printf("Failed to get json value");if (free_mail) free_mem(_pmail);return FAIL;}
+ if (dest==NULL) {printf("Failed to get json value");return FAIL;}
  dest[length] = '\0';
- if (free_mail) free_mem(_pmail);
+
  return SUCCESS;
 }
 
+int change_bmp(int bmp_id, char value)
+{
+ letters_amount = LETTERS_AMOUNT(mail_size);
+ if (!is_bmp_valid()) return FAIL;
+ (*_pbmp)[bmp_id] = value;
+ write(*_pbmp, BITMAP_LOCATION);
+}
+
+
 int get_adrs_by_theme(int *dest_adrs, char *theme) // adrs[0] stores length
 {
- short free_mail=0;
- if (*_pmail==NULL) {load_mail(); free_mail = TRUE;}
-
  letters_amount = LETTERS_AMOUNT(mail_size);
  char iter_theme[LETTER_LENGTH]; // TODO: Use key_len (currently THEME-key len)
 
@@ -145,30 +151,20 @@ int get_adrs_by_theme(int *dest_adrs, char *theme) // adrs[0] stores length
    j++;
   }
  }
- if (free_mail) free_mem(_pmail);
-
 
  return (dest_adrs[0] != 0) ? SUCCESS : FAIL;
 }
+
+#define GET_BY_THEME int adrs[MAX_LETTERS_AMOUNT] = {0};load_mail();get_adrs_by_theme(adrs, "Hi");char dest[LETTER_LENGTH];for (int i = 1; i <= adrs[0]; i++){get_value_by_adr(dest, adrs[i]);printf("%s\n", dest);}free_mem(_pmail);return 1;
+#define CHANGE_BMP  load_mail();load_bmp();change_bmp(0,BMP_REMOVED);free_mem(_pmail);free_mem(_pbmp);
 
 int main()
 {
  printf("Bonjour\n");
 
- int adrs[MAX_LETTERS_AMOUNT] = {0};
 
- load_mail();
- get_adrs_by_theme(adrs, "Hi");
- char dest[LETTER_LENGTH];
-
- for (int i = 1; i <= adrs[0]; i++)
- {
-  get_value_by_adr(dest, adrs[i]);
-  printf("%s\n", dest);
- }
- free_mem(_pmail);
- return 1;
 }
+
 
 void replace_substr(char *origin, char *substr, char *new_substr)
 {
