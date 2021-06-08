@@ -51,10 +51,10 @@ int alloc_mem(char** buf, FILE* infile)
  if (infile == NULL) return FAIL;
 
  fseek(infile, 0L, SEEK_END);
- long numbytes = ftell(infile)+1;
+ long numbytes = ftell(infile);
  fseek(infile, 0L, SEEK_SET);
 
- *buf = (char *) malloc(numbytes* sizeof(char));
+ *buf = (char *) malloc(numbytes* sizeof(char)+1);
 
  printf("Allocating mem: %ld\n",numbytes);
  return numbytes* sizeof(char);
@@ -100,8 +100,8 @@ int read_file(char** buf, char *path) // Check if buf is null before calling !
 
  fread(*buf, sizeof(char), numbytes, infile);
  fclose(infile);
- (*buf)[numbytes-1]='\0';
- printf("\nCHECKER:%s\n",*buf);
+ (*buf)[numbytes]='\0';
+
  return numbytes;
 }
 
@@ -124,7 +124,7 @@ int load_mail() {
 
 int load_bmp() {
  bmp_size = read_file(_pbmp, BITMAP_LOCATION);
- //printf("\nBITMAP:%s\n",*_pbmp);
+ printf("\nBITMAP:%s\n [[%d]]",*_pbmp, bmp_size);
 }  // Returns bitmap size
 
 int get_value_by_adr(char *dest, int address)
@@ -169,13 +169,15 @@ int change_bmp(int bmp_id, char value)
 
 int add_letter()
 {
+ int i =0;
+ MARK:
  letters_amount = LETTERS_AMOUNT(mail_size);
 
  if (!is_bmp_valid()) return FAIL;
  char value_holder[MAX_MAIL_LENGTH];                                      /// TODO REMOVE IT ! USE SOMETHING ELSE
 
  int free_index = -1;
- for (int i=0; i<bmp_size; i++) if ((*_pbmp)[i]==BMP_REMOVED) {free_index=i; break;}
+ for (; i<bmp_size; i++) if ((*_pbmp)[i]==BMP_REMOVED) {free_index=i; break;}
  if (free_index==-1)
  {
 
@@ -188,12 +190,18 @@ int add_letter()
   char new_letter[LETTER_LENGTH];
   snprintf(new_letter, sizeof(new_letter), "{\n    \"id\": %d,\n    \"sender\": \"%s\",\n    \"receiver\": \"%s\",\n    \"theme\": \"%s\",\n    \"body\": \"%s\",\n    \"reply_to\": %s\n  }", free_index,"0000","0000","00","00", "-1");
 
- // printf("\n\n\nBEFORE: %s\n\n\n",*_pmail);
-  replace_substr(*_pmail,value_holder,new_letter);
-//  printf("\n\n\nAFTER: %s\n\n\n",*_pmail);
-  change_bmp(free_index,BMP_ACTIVE);
-  return write(*_pmail,MAIL_LOCATION);
+  change_bmp(free_index, BMP_ACTIVE);
+
+  if (strcmp(value_holder, new_letter) != 0)
+  {
+   replace_substr(*_pmail, value_holder, new_letter);
+
+   return write(*_pmail, MAIL_LOCATION);
+
+  } else {printf("[[[[%s and %s are EQUAL]]]]\n",value_holder,new_letter);i+=1;goto MARK;}
+  return SUCCESS;
  }
+
 }
 
 
@@ -225,7 +233,8 @@ int main()
  printf("Bonjour\n");
  load_mail();
  load_bmp();
-/* for (int i=0; i<bmp_size; i++)
+ printf("\nBITMAP2:%s\n",*_pbmp);
+ for (int i=0; i<bmp_size; i++)
  {
 
   add_letter();
@@ -234,7 +243,7 @@ int main()
   load_mail();
   load_bmp();
  }
- free_mem(_pmail);*/
+ free_mem(_pmail);
  free_mem(_pbmp);
 }
 
