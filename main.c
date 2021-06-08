@@ -1,4 +1,4 @@
-#include <stdio.h>
+/*#include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <malloc.h>
@@ -158,7 +158,7 @@ int add_letter(char* mail, char* bitmap, char* args)
   adr = find_adr_by_id(mail_,free_index);
   get_value_by_addr(mail_, value_holder,adr);
 
-  replace_substr(mail_,value_holder,CREATE_LETTER("00","0000","0000","00","00", "-1"));
+  replace_substr(mail_,value_holder,CREATE_LETTER("0","0000","0000","00","00", "-1"));
   return write(mail_,MAIL_LOCATION);
   //change_bmp(mail_,bitmap_,free_index,BMP_ACTIVE);
  }
@@ -258,8 +258,11 @@ int parse_json(char *json_, jsmn_parser parser_, jsmntok_t *tokens_, char *path_
  return json_size_;
 }
 
+char buf[10000];
+
 int read_file(char *buffer, char *path)
 {
+ printf("\nReading file %s \n \n ", path);
  long length=0;
  FILE * fp_ = fopen(path, "rb");
 
@@ -269,16 +272,16 @@ int read_file(char *buffer, char *path)
   length = ftell (fp_);
   fseek (fp_, 0, SEEK_SET);
 
-  if (buffer)
+  if (buf)
   {
-   fread (buffer, 1, length, fp_);
+   fread (buf, 1, length, fp_);
   }
   fclose (fp_);
  }
 
  // TODO: RECHECK if (buffer) {}
 
- //printf("%s\n-----------\n",buffer);
+ printf(" READING FILE : %s\n-----------\n",buf);
 
  if (buffer == NULL)
  {
@@ -313,7 +316,7 @@ int load_mail(char* mail) // Returns mail size
 {
  printf("%s\n\n","LOADING MAILz");
  int r = parse_json(mail, parser, tokens, MAIL_LOCATION);
- printf("MAIL AMOUNT IS : %s\n",mail);
+ //printf("MAIL AMOUNT IS : %s\n",mail);
  return r;
 }
 
@@ -321,3 +324,4 @@ int load_bitmap(char* bitmap) // Returns bitmap size
 {
  return read_file(bitmap, BITMAP_LOCATION);
 }
+*/
