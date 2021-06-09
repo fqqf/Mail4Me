@@ -179,15 +179,15 @@ int add_letter()
   int origin_len = strlen(*_pmail); // TODO: replace strlen
   int add_len = strlen(new_letter);
   char oldmail[alloc_mail_len];
-  printf("BEFORE: %d\n",alloc_mail_len);
+ // printf("BEFORE: %d\n",alloc_mail_len);
   strcpy(oldmail,*_pmail);
   realloc(*_pmail,alloc_mail_len=(alloc_mail_len+add_len*sizeof(char))); // TODO: Conversion
-  printf("AFTER: %d\n",alloc_mail_len);
+ // printf("AFTER: %d\n",alloc_mail_len);
   (oldmail)[origin_len-1]='\0';
   (oldmail)[origin_len-2]=',';
 
   snprintf(*_pmail, alloc_mail_len,"%s\n  %s\n]",oldmail, new_letter);
-  printf("%s",*_pmail);
+ // printf("%s",*_pmail);
   realloc(*_pbmp,(bmp_size+2)* sizeof(char));
   snprintf(*_pbmp,(bmp_size+2)* sizeof(char),"%s%c",*_pbmp,BMP_ACTIVE);
   write(*_pmail, MAIL_LOCATION);
@@ -200,10 +200,11 @@ int add_letter()
   get_value_by_adr(value_holder,adr);
   snprintf(new_letter, sizeof(new_letter), "{\n    \"id\": %d,\n    \"sender\": \"%s\",\n    \"receiver\": \"%s\",\n    \"theme\": \"%s\",\n    \"body\": \"%s\",\n    \"reply_to\": %s\n  }", free_index,"0000","0000","00","00", "-1");
 
-  change_bmp(free_index, BMP_ACTIVE);
+
 
   if (strcmp(value_holder, new_letter) != 0)
   {
+   change_bmp(free_index, BMP_ACTIVE);
    replace_letter(*_pmail, value_holder, new_letter);
 
    return write(*_pmail, MAIL_LOCATION);
@@ -259,7 +260,7 @@ int get_adrs_by_receiver(int *dest_adrs, char *receiver) // adrs[0] stores lengt
 
  for (int i = 0, j = 1; i < letters_amount; i++)
  {
-  get_value_by_adr(value_holder, LETTER_KEY_ADR(i, SENDER));
+  get_value_by_adr(value_holder, LETTER_KEY_ADR(i, RECEIVER));
   if (strcmp(value_holder,receiver)==0)
   {
    dest_adrs[j] = LETTER_ADR(i);
@@ -298,9 +299,10 @@ int get_adrs_from_chain(int *dest_adrs, char *id1, char *id2) // adrs[0] stores 
 
 
 #define GET_BY_THEME int adrs[MAX_LETTERS_AMOUNT] = {0};load_mail();get_adrs_by_theme(adrs, "Hi");char dest[LETTER_LENGTH];for (int i = 1; i <= adrs[0]; i++){get_value_by_adr(dest, adrs[i]);printf("%s\n", dest);}free_mem(_pmail);return 1;
-#define CHANGE_BMP  load_mail();load_bmp();change_bmp(0,BMP_REMOVED);free_mem(_pmail);free_mem(_pbmp);
+#define CHANGE_BMP(BMP_ID)  load_mail();load_bmp();change_bmp(BMP_ID,BMP_REMOVED);free_mem(_pmail);free_mem(_pbmp);
 #define ADD_LETTERS_REPLACE  load_mail();load_bmp();for (int i=0; i<bmp_size; i++){add_letter();free_mem(_pmail);free_mem(_pbmp);load_mail();load_bmp();}free_mem(_pmail);free_mem(_pbmp);
 #define ADD_LETTER_APPEND  load_mail();load_bmp();add_letter();free_mem(_pmail);free_mem(_pbmp);
+
 
 
 void replace_letter(char *origin, char *substr, char *new_substr)
