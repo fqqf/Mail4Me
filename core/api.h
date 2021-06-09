@@ -200,11 +200,11 @@ int add_letter()
   get_value_by_adr(value_holder,adr);
   snprintf(new_letter, sizeof(new_letter), "{\n    \"id\": %d,\n    \"sender\": \"%s\",\n    \"receiver\": \"%s\",\n    \"theme\": \"%s\",\n    \"body\": \"%s\",\n    \"reply_to\": %s\n  }", free_index,"0000","0000","00","00", "-1");
 
-
+  change_bmp(free_index, BMP_ACTIVE);
 
   if (strcmp(value_holder, new_letter) != 0)
   {
-   change_bmp(free_index, BMP_ACTIVE);
+
    replace_letter(*_pmail, value_holder, new_letter);
 
    return write(*_pmail, MAIL_LOCATION);
